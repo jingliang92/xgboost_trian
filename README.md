@@ -58,3 +58,5 @@ varImp(xgb_model)
 ``` 
 
 >NOTE:the data must be numeric, and you can use every function in train of caret, for example VarImp, trControl and so on.
+
+[中文版在这里](https://jingliang92.github.io/jingliang-blog/2017/03/20/xgboosttrain/)
