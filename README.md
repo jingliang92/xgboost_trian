@@ -18,7 +18,7 @@ xgbgrid <- expand.grid(eta=0.26, gamma=0, max_depth=seq(3,10,1),
                        objective="reg:linear")
 ```   
 
-or set tuneLength to a number, and it generates tuneLength groups randomly.
+Or set tuneLength to a number, and it generates tuneLength sets of parameters randomly.
 
 The meaning of the parameters, you can find in [XGBoost Parameters](http://xgboost.readthedocs.io/en/latest/parameter.html#parameters-in-r-package).
 
