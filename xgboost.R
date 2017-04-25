@@ -1,4 +1,4 @@
-#train中模型函数编写详见http://topepo.github.io/caret/custom_models.html
+#train http://topepo.github.io/caret/custom_models.html
 xgboost <- list(type = c("Classification", "Regression"),
                 library = c("xgboost", "dplyr"),
                 loop = NULL)
@@ -44,6 +44,10 @@ xgboost$grid <- xgboostGrid
 
 xgboostFit <- function(x, y, wts, param, lev, last, classProbs, ...){
   
+  if (is.factor(y) && length(lev) == 2){
+    y=ifelse(y == lev[1], 1, 0)
+  } 
+  
   modArgs <- list(data=as.matrix(x), label=as.matrix(as.numeric(as.character(y))),
                   eta=param$eta, gamma=param$gamma, max_depth=param$max_depth,  
                   min_child_weight=param$min_child_weight, max_delta_step=param$max_delta_step, subsample=param$subsample, 
@@ -56,13 +60,58 @@ xgboost$fit <- xgboostFit
 
 xgboostPred <- function(modelFit, newdata, preProc = NULL, submodels = NULL){
   out <- predict(modelFit, as.matrix(newdata))
+  out[is.nan(out)] <- NA
+  
+  if(modelFit$problemType == 'Classification'){
+    out <- ifelse(out>=0.5,modelFit$obsLevels[1], modelFit$obsLevels[2])
+  }
+  
+  if (!is.null(submodels)) {
+    tmp <- predict(modelFit, as.matrix(newdata))
+    
+    if(modelFit$problemType == 'Classification'){
+      tmp <- ifelse(tmp >= 0.5, modelFit$obsLevels[1], 
+                    modelFit$obsLevels[2])
+      tmp <- as.list(as.data.frame(tmp, stringsAsFactors = FALSE))
+      out <- c(list(out), tmp)
+    }else{
+      tmp <- as.list(as.data.frame(tmp))
+      c(list(out), tmp)
+    }
+  }
   out
+  
 }
 xgboost$predict <- xgboostPred
 
 xgboostProb <- function(modelFit, newdata, preProc = NULL, submodels = NULL){
   out <- predict(modelFit, as.matrix(newdata))
+  out[is.nan(out)] <- NA
+  
+  if(modelFit$problemType == 'Classification'){
+    out <- cbind(out, 1 - out)
+    colnames(out) <- modelFit$obsLevels
+  }
+ 
+  
+  if (!is.null(submodels)) {
+    tmp <- predict(modelFit, as.matrix(newdata))
+    
+    if(modelFit$problemType == 'Classification'){
+      tmp <- as.list(as.data.frame(tmp))
+      
+      tmp <- lapply(tmp, function(x, lvl) {
+        x <- cbind(x, 1 - x)
+        colnames(x) <- lvl
+        x
+      }, lvl = modelFit$obsLevels)
+      
+    }
+    out <- c(list(out), tmp)
+    
+  }
   out
+  
 }
 xgboost$prob <- xgboostProb
 
@@ -72,7 +121,6 @@ xgboostSort <- function(x){
 xgboost$sort <- xgboostSort
 
 xgboost$levels <- function(x){
-  
   if (is.null(x$classes)) {
     out <- if (any(names(x) == "obsLevels")) 
       x$obsLevels

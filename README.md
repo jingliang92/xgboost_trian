@@ -1,4 +1,4 @@
-## You can use xgboost in train of caret in R ,just like using gmb in train.
+## You can use xgboost in train of caret in R ,just like using gbm in train.
 
 ### First, you need load the code.
 
@@ -29,6 +29,8 @@ The meaning of the parameters, you can find in [XGBoost Parameters](http://xgboo
 ```   
 xgb_model <- train(x, y, method = xgboost, tuneGrid=gbmgrid)
 ```   
+
+>NOTE:if you want to use 'Classification', the y must be factor. And if you want the AUC, you need to set the trainControl(classProbs = TRUE,summaryFunction = twoClassSummary)
 
 ### The example:
 
